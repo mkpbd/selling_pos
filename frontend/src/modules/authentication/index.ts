@@ -1,0 +1,11 @@
+// Public API of the authentication module.
+export { authApi, authKeys } from './api/auth.api'
+export { AuthProvider } from './components/AuthProvider'
+export { Can } from './components/Can'
+export { ChangePasswordDialog } from './components/ChangePasswordDialog'
+export { GuestOnly, RequireAuth, RequirePermission } from './components/guards'
+export { useAuth } from './hooks/useAuth'
+export { useLogout } from './hooks/useAuthMutations'
+export { usePermission, type PermissionApi } from './hooks/usePermission'
+export { hasAllPermissions, hasAnyPermission, hasPermission } from './permissions'
+export type { Me } from './types'
