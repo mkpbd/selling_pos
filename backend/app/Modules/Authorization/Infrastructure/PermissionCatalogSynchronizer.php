@@ -28,7 +28,10 @@ final readonly class PermissionCatalogSynchronizer
     {
         $names = $this->registry->names();
 
-        foreach ($names as $name) {
+        $existing = Permission::query()->where('guard_name', RoleModel::GUARD)->pluck('name')->all();
+        $introduced = array_values(array_diff($names, $existing));
+
+        foreach ($introduced as $name) {
             Permission::findOrCreate($name, RoleModel::GUARD);
         }
 
@@ -57,8 +60,17 @@ final readonly class PermissionCatalogSynchronizer
                 $role->forceFill(['is_system' => true])->save();
             }
 
+            $defaults = $systemRole->defaultPermissions() ?? $names;
+
             if ($isNew || $resetSystemRolePermissions || $systemRole === SystemRole::Admin) {
-                $role->syncPermissions($systemRole->defaultPermissions() ?? $names);
+                $role->syncPermissions($defaults);
+            } elseif ($introduced !== []) {
+                // Upgrades: grant permissions introduced by new modules without
+                // touching an administrator's customizations of existing ones.
+                $grant = array_values(array_intersect($introduced, $defaults));
+                if ($grant !== []) {
+                    $role->givePermissionTo($grant);
+                }
             }
         }
 

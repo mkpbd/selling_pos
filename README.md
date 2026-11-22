@@ -44,15 +44,29 @@ Sign in with the `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` values from `backend
 ```
 app/
 ├── Shared/                       Shared kernel
-│   ├── Domain/                   Result<T>, Error, ErrorType, AggregateRoot, DomainEvent, PermissionEnum
+│   ├── Domain/                   Result<T>, Error, AggregateRoot, DomainEvent, PermissionEnum, Money/Quantity/Percentage
 │   ├── Application/              TransactionManager, EventDispatcher, PageRequest/PageResult, Actor, BranchContext, PermissionRegistry
 │   ├── Infrastructure/           DB transaction manager, event dispatcher, audit listener, ModuleServiceProvider
-│   └── Presentation/             ApiResponse envelope, exception renderer, request-id/security-header middleware, ListRequest
+│   └── Presentation/             ApiResponse envelope, exception renderer, request-id / security-header / idempotency middleware
 └── Modules/
     ├── Organization/             Branches
     ├── Identity/                 Users, credentials, sessions/tokens, branch membership, branch context
-    └── Authorization/            Permission catalog, roles, per-branch role assignment
+    ├── Authorization/            Permission catalog, roles, per-branch role assignment
+    ├── Products/                 Products, categories, units → publishes ProductChanged / UnitChanged
+    └── Inventory/                Per-branch stock, append-only movement ledger, local product projection
 ```
+
+**Event-driven integration:** Inventory never reads the Products tables. It keeps an `inventory_products` projection that's updated from `ProductChanged`/`UnitChanged` after each commit. Rebuild it with `php artisan inventory:sync-catalog`.
+
+**Money and quantities** are integer minor units in the domain (no floats), `numeric` in Postgres, and decimal strings in the API (`"45.00"`, `"12.000"`).
+
+### Operational commands
+
+| Command | When |
+| --- | --- |
+| `php artisan authorization:sync` | Every deploy. Syncs the permission catalog and grants newly introduced permissions to system roles. |
+| `php artisan inventory:sync-catalog` | After restoring data, or if a projection update failed |
+| `php artisan schedule:work` (dev) / cron `schedule:run` | Runs `idempotency:prune` daily |
 
 Each module has the same layout:
 `Domain/` (aggregates, value objects, repository interfaces, events, errors, permissions) →
@@ -73,4 +87,5 @@ Each module has the same layout:
 - **RBAC per branch:** roles are global definitions, and a user holds roles **per branch** (spatie teams = branches). `X-Branch-Id` selects the active branch, and every `can:` check is evaluated in that branch.
 - **No privilege escalation:** a non-super-admin can only grant roles whose permissions they already hold in that branch. They can't modify super admins or users who have more privileges than they do, and they can't deactivate themselves.
 - Deactivating a user, resetting their password, or changing it revokes their tokens and sessions.
+- **Stock integrity:** adjustments take a row lock (`SELECT … FOR UPDATE`), stock can't go negative (domain rule plus a DB check constraint), and a DB trigger blocks any UPDATE or DELETE on `inventory_movements`. `POST /inventory/adjustments` honours `Idempotency-Key`, so retries replay the original result instead of applying it twice.
 - Responses use the standard error envelope, `X-Request-Id` correlation, and security headers. Passwords and tokens never appear in logs or events.

@@ -7,6 +7,7 @@ use App\Modules\Authorization\Domain\SystemRole;
 use App\Modules\Authorization\Infrastructure\PermissionCatalogSynchronizer;
 use App\Modules\Identity\Infrastructure\Persistence\Models\User;
 use App\Modules\Organization\Infrastructure\Persistence\BranchModel;
+use App\Modules\Products\Infrastructure\DefaultUnits;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -18,9 +19,10 @@ use RuntimeException;
  */
 class DatabaseSeeder extends Seeder
 {
-    public function run(PermissionCatalogSynchronizer $permissions, AccessControl $access): void
+    public function run(PermissionCatalogSynchronizer $permissions, AccessControl $access, DefaultUnits $units): void
     {
         $permissions->sync();
+        $units->seed();
 
         $branch = BranchModel::query()->firstOrCreate(
             ['code' => 'HQ'],

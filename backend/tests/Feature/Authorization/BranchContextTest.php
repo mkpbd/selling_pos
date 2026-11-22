@@ -17,7 +17,7 @@ it('resolves permissions per branch via X-Branch-Id', function () {
     $me = $this->getJson('/api/v1/auth/me', ['X-Branch-Id' => $this->ctg->id])->assertOk();
     $me->assertJsonPath('data.current_branch.code', 'CTG')
         ->assertJsonPath('data.roles', ['cashier'])
-        ->assertJsonPath('data.permissions', ['dashboard.view']);
+        ->assertJsonPath('data.permissions', ['dashboard.view', 'inventory.view', 'products.view']);
     expect(collect($me->json('data.branches'))->pluck('code')->sort()->values()->all())->toBe(['CTG', 'HQ']);
 });
 

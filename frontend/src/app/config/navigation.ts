@@ -1,6 +1,5 @@
 import {
   BadgeDollarSign,
-  Boxes,
   Building2,
   ChartColumn,
   Contact,
@@ -10,6 +9,7 @@ import {
   ShieldCheck,
   Truck,
   Users,
+  Warehouse,
   type LucideIcon,
 } from 'lucide-react'
 import { PERMISSIONS, type Permission } from '@/shared/constants/permissions'
@@ -33,11 +33,16 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [{ title: 'Dashboard', to: '/dashboard', icon: LayoutDashboard, permission: PERMISSIONS.DASHBOARD_VIEW }],
   },
   {
+    label: 'Catalog & stock',
+    items: [
+      { title: 'Products', to: '/products', icon: Package, permission: PERMISSIONS.PRODUCTS_VIEW },
+      { title: 'Inventory', to: '/inventory', icon: Warehouse, permission: PERMISSIONS.INVENTORY_VIEW },
+    ],
+  },
+  {
     label: 'Operations',
     items: [
       { title: 'Sales / POS', icon: ScanBarcode },
-      { title: 'Products', icon: Package },
-      { title: 'Inventory', icon: Boxes },
       { title: 'Customers', icon: Contact },
       { title: 'Purchases', icon: Truck },
       { title: 'Finance', icon: BadgeDollarSign },

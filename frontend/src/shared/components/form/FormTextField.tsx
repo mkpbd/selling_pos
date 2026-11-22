@@ -1,7 +1,8 @@
-import type { HTMLInputTypeAttribute, ReactNode } from 'react'
+import type { HTMLAttributes, HTMLInputTypeAttribute, ReactNode } from 'react'
 import { Controller, type Control, type FieldValues, type Path } from 'react-hook-form'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/shared/components/ui/field'
 import { Input } from '@/shared/components/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from '@/shared/components/ui/input-group'
 import { Textarea } from '@/shared/components/ui/textarea'
 import { PasswordInput } from '../PasswordInput'
 
@@ -17,6 +18,11 @@ interface FormTextFieldProps<TIn extends FieldValues, TCtx, TOut extends FieldVa
   disabled?: boolean
   required?: boolean
   maxLength?: number
+  inputMode?: HTMLAttributes<HTMLInputElement>['inputMode']
+  step?: string | number
+  min?: string | number
+  /** Short text shown inside the input on the right (e.g. "%", "PCS"). */
+  endAddon?: ReactNode
   className?: string
   inputClassName?: string
   /** Transform the raw input before storing (e.g. uppercase). */
@@ -37,6 +43,10 @@ export function FormTextField<TIn extends FieldValues, TCtx, TOut extends FieldV
   disabled,
   required,
   maxLength,
+  inputMode,
+  step,
+  min,
+  endAddon,
   className,
   inputClassName,
   transform,
@@ -63,11 +73,30 @@ export function FormTextField<TIn extends FieldValues, TCtx, TOut extends FieldV
           disabled: disabled ?? field.disabled,
           maxLength,
           required,
+          inputMode,
           'aria-invalid': fieldState.invalid || undefined,
           'aria-describedby': describedBy,
           className: inputClassName,
         }
         const onChange = (value: string) => field.onChange(transform ? transform(value) : value)
+
+        let inputEl: ReactNode
+        if (type === 'textarea') {
+          inputEl = <Textarea {...common} onChange={(e) => onChange(e.target.value)} />
+        } else if (type === 'password-toggle') {
+          inputEl = <PasswordInput {...common} onChange={(e) => onChange(e.target.value)} />
+        } else if (endAddon) {
+          inputEl = (
+            <InputGroup>
+              <InputGroupInput {...common} type={type} step={step} min={min} onChange={(e) => onChange(e.target.value)} />
+              <InputGroupAddon align="inline-end">
+                <InputGroupText>{endAddon}</InputGroupText>
+              </InputGroupAddon>
+            </InputGroup>
+          )
+        } else {
+          inputEl = <Input {...common} type={type} step={step} min={min} onChange={(e) => onChange(e.target.value)} />
+        }
 
         return (
           <Field data-invalid={fieldState.invalid || undefined} className={className}>
@@ -82,13 +111,7 @@ export function FormTextField<TIn extends FieldValues, TCtx, TOut extends FieldV
               </FieldLabel>
               {labelAction}
             </div>
-            {type === 'textarea' ? (
-              <Textarea {...common} onChange={(e) => onChange(e.target.value)} />
-            ) : type === 'password-toggle' ? (
-              <PasswordInput {...common} onChange={(e) => onChange(e.target.value)} />
-            ) : (
-              <Input {...common} type={type} onChange={(e) => onChange(e.target.value)} />
-            )}
+            {inputEl}
             {description && <FieldDescription id={`${id}-description`}>{description}</FieldDescription>}
             <FieldError id={`${id}-error`} errors={[fieldState.error]} />
           </Field>

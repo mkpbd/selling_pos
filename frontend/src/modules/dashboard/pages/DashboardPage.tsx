@@ -1,6 +1,7 @@
+import { Link } from 'react-router'
 import {
+  ArrowRight,
   BadgeDollarSign,
-  Boxes,
   Building2,
   ChartColumn,
   Contact,
@@ -9,9 +10,12 @@ import {
   ShieldCheck,
   Truck,
   Users,
+  Warehouse,
   type LucideIcon,
 } from 'lucide-react'
 import { useAuth, usePermission } from '@/modules/authentication'
+import { StockSummaryCards } from '@/modules/inventory'
+import { Button } from '@/shared/components/ui/button'
 import { PERMISSIONS, type Permission } from '@/shared/constants/permissions'
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle'
 import { ModuleTile } from '../components/ModuleTile'
@@ -25,6 +29,25 @@ interface TileDef {
   to?: string
   permission?: Permission
 }
+
+const CATALOG_TILES: TileDef[] = [
+  {
+    title: 'Products',
+    description: 'Catalogue, pricing, margins, categories and units.',
+    icon: Package,
+    accent: 'bg-amber-500/10 text-amber-600 ring-amber-500/20 dark:text-amber-300',
+    to: '/products',
+    permission: PERMISSIONS.PRODUCTS_VIEW,
+  },
+  {
+    title: 'Inventory',
+    description: 'On-hand stock, adjustments, counts and the movement ledger.',
+    icon: Warehouse,
+    accent: 'bg-orange-500/10 text-orange-600 ring-orange-500/20 dark:text-orange-300',
+    to: '/inventory',
+    permission: PERMISSIONS.INVENTORY_VIEW,
+  },
+]
 
 const ADMIN_TILES: TileDef[] = [
   {
@@ -61,18 +84,6 @@ const UPCOMING_TILES: TileDef[] = [
     accent: 'bg-emerald-500/10 text-emerald-600 ring-emerald-500/20 dark:text-emerald-300',
   },
   {
-    title: 'Products',
-    description: 'Catalogue, variants, pricing and barcodes.',
-    icon: Package,
-    accent: 'bg-amber-500/10 text-amber-600 ring-amber-500/20 dark:text-amber-300',
-  },
-  {
-    title: 'Inventory',
-    description: 'Stock levels, transfers and adjustments per branch.',
-    icon: Boxes,
-    accent: 'bg-orange-500/10 text-orange-600 ring-orange-500/20 dark:text-orange-300',
-  },
-  {
     title: 'Customers',
     description: 'Profiles, loyalty and purchase history.',
     icon: Contact,
@@ -98,47 +109,83 @@ const UPCOMING_TILES: TileDef[] = [
   },
 ]
 
+function Section({ id, title, description, action, children }: { id: string; title: string; description: string; action?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <section aria-labelledby={id} className="space-y-4">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <h2 id={id} className="text-lg font-semibold tracking-tight">
+            {title}
+          </h2>
+          <p className="text-sm text-muted-foreground">{description}</p>
+        </div>
+        {action}
+      </div>
+      {children}
+    </section>
+  )
+}
+
 export function DashboardPage() {
   useDocumentTitle('Dashboard')
   const { user } = useAuth()
   const { can } = usePermission()
   if (!user) return null
 
-  const adminTiles = ADMIN_TILES.filter((t) => !t.permission || can(t.permission))
+  const visible = (tiles: TileDef[]) => tiles.filter((t) => !t.permission || can(t.permission))
+  const catalogTiles = visible(CATALOG_TILES)
+  const adminTiles = visible(ADMIN_TILES)
+  const canSeeStock = can(PERMISSIONS.INVENTORY_VIEW)
 
   return (
     <div className="space-y-10">
       <WelcomeHero user={user} />
 
+      {canSeeStock && (
+        <Section
+          id="stock-heading"
+          title="Stock health"
+          description={`Live figures for ${user.current_branch?.name ?? 'your branch'}.`}
+          action={
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/inventory">
+                View inventory
+                <ArrowRight data-icon="inline-end" />
+              </Link>
+            </Button>
+          }
+        >
+          <StockSummaryCards metrics={['low_stock', 'out_of_stock', 'stock_value']} linkBase="/inventory" />
+        </Section>
+      )}
+
+      {catalogTiles.length > 0 && (
+        <Section id="catalog-heading" title="Catalog & stock" description="Manage what you sell and what you hold.">
+          <ul className="grid gap-4 sm:grid-cols-2">
+            {catalogTiles.map((tile, i) => (
+              <ModuleTile key={tile.title} {...tile} index={i} />
+            ))}
+          </ul>
+        </Section>
+      )}
+
       {adminTiles.length > 0 && (
-        <section aria-labelledby="admin-heading" className="space-y-4">
-          <div>
-            <h2 id="admin-heading" className="text-lg font-semibold tracking-tight">
-              Administration
-            </h2>
-            <p className="text-sm text-muted-foreground">Set up your organisation before you start selling.</p>
-          </div>
+        <Section id="admin-heading" title="Administration" description="Set up your organisation before you start selling.">
           <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {adminTiles.map((tile, i) => (
               <ModuleTile key={tile.title} {...tile} index={i} />
             ))}
           </ul>
-        </section>
+        </Section>
       )}
 
-      <section aria-labelledby="upcoming-heading" className="space-y-4">
-        <div>
-          <h2 id="upcoming-heading" className="text-lg font-semibold tracking-tight">
-            Coming next
-          </h2>
-          <p className="text-sm text-muted-foreground">Modules on the roadmap for Selling POS.</p>
-        </div>
-        <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <Section id="upcoming-heading" title="Coming next" description="Modules on the roadmap for Selling POS.">
+        <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
           {UPCOMING_TILES.map((tile, i) => (
-            <ModuleTile key={tile.title} {...tile} index={i + adminTiles.length} />
+            <ModuleTile key={tile.title} {...tile} index={i} />
           ))}
         </ul>
-      </section>
+      </Section>
     </div>
   )
 }

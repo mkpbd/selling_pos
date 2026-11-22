@@ -6,10 +6,12 @@ namespace App\Modules\Identity;
 
 use App\Modules\Identity\Application\Contracts\PasswordHasher;
 use App\Modules\Identity\Application\Contracts\PasswordResetService;
+use App\Modules\Identity\Application\Contracts\UserDirectory;
 use App\Modules\Identity\Application\Contracts\UserSessions;
 use App\Modules\Identity\Application\Queries\UserQueryService;
 use App\Modules\Identity\Domain\IdentityPermission;
 use App\Modules\Identity\Domain\UserRepository;
+use App\Modules\Identity\Infrastructure\Persistence\EloquentUserDirectory;
 use App\Modules\Identity\Infrastructure\Persistence\EloquentUserQueryService;
 use App\Modules\Identity\Infrastructure\Persistence\EloquentUserRepository;
 use App\Modules\Identity\Infrastructure\Security\LaravelPasswordHasher;
@@ -29,6 +31,7 @@ final class IdentityServiceProvider extends ModuleServiceProvider
         PasswordHasher::class => LaravelPasswordHasher::class,
         UserSessions::class => LaravelUserSessions::class,
         PasswordResetService::class => LaravelPasswordResetService::class,
+        UserDirectory::class => EloquentUserDirectory::class,
     ];
 
     public function register(): void

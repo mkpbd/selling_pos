@@ -5,6 +5,8 @@ import { GuestOnly, RequireAuth } from '@/modules/authentication'
 import { authRoutes } from '@/modules/authentication/routes'
 import { branchesRoutes } from '@/modules/branches'
 import { dashboardRoutes } from '@/modules/dashboard'
+import { inventoryRoutes } from '@/modules/inventory'
+import { productsRoutes } from '@/modules/products'
 import { rolesRoutes } from '@/modules/roles'
 import { usersRoutes } from '@/modules/users'
 import { ForbiddenView, NotFoundView } from '@/shared/components/StatusViews'
@@ -26,6 +28,8 @@ export const routes: RouteObject[] = [
             children: [
               { index: true, element: <Navigate to="/dashboard" replace /> },
               ...dashboardRoutes,
+              ...productsRoutes,
+              ...inventoryRoutes,
               ...branchesRoutes,
               ...usersRoutes,
               ...rolesRoutes,

@@ -22,7 +22,7 @@ it('lists roles with system flags and user counts', function () {
     expect($roles->keys()->all())->toContain('admin', 'manager', 'cashier')
         ->and($roles['admin']['is_system'])->toBeTrue()
         ->and($roles['admin']['users_count'])->toBe(1)
-        ->and($roles['cashier']['permissions'])->toBe(['dashboard.view']);
+        ->and($roles['cashier']['permissions'])->toBe(['dashboard.view', 'inventory.view', 'products.view']);
 });
 
 it('creates, updates and deletes a custom role', function () {

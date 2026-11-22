@@ -12,6 +12,7 @@ use App\Shared\Domain\Events\DomainEvent;
 use App\Shared\Infrastructure\Audit\AuditDomainEvent;
 use App\Shared\Infrastructure\Events\LaravelEventDispatcher;
 use App\Shared\Infrastructure\Persistence\DatabaseTransactionManager;
+use App\Shared\Presentation\Console\PruneIdempotencyKeysCommand;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Http\Request;
@@ -37,6 +38,10 @@ final class SharedServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Event::listen(DomainEvent::class, AuditDomainEvent::class);
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([PruneIdempotencyKeysCommand::class]);
+        }
 
         RateLimiter::for('api', static fn (Request $request) => Limit::perMinute(120)
             ->by($request->user()?->getAuthIdentifier() ?? $request->ip()));

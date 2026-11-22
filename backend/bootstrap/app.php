@@ -4,6 +4,7 @@ use App\Modules\Identity\Presentation\Http\Middleware\EnsureUserIsActive;
 use App\Modules\Identity\Presentation\Http\Middleware\ResolveBranchContext;
 use App\Shared\Presentation\Exceptions\ApiExceptionRenderer;
 use App\Shared\Presentation\Http\Middleware\AssignRequestId;
+use App\Shared\Presentation\Http\Middleware\EnsureIdempotency;
 use App\Shared\Presentation\Http\Middleware\SecurityHeaders;
 use Illuminate\Auth\Middleware\Authorize;
 use Illuminate\Foundation\Application;
@@ -33,6 +34,9 @@ return Application::configure(basePath: dirname(__DIR__))
             EnsureUserIsActive::class,
             ResolveBranchContext::class,
         ]);
+
+        // Opt-in Idempotency-Key handling for critical writes.
+        $middleware->alias(['idempotent' => EnsureIdempotency::class]);
 
         // Branch scope must be set before `can:` permission checks run.
         $middleware->prependToPriorityList(Authorize::class, EnsureUserIsActive::class);

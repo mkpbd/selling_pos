@@ -30,8 +30,14 @@ enum SystemRole: string
                 'users.create',
                 'users.update',
                 'roles.view',
+                'products.view',
+                'products.create',
+                'products.update',
+                'catalog.manage',
+                'inventory.view',
+                'inventory.adjust',
             ],
-            self::Cashier => ['dashboard.view'],
+            self::Cashier => ['dashboard.view', 'products.view', 'inventory.view'],
         };
     }
 
